@@ -1,4 +1,4 @@
-;;; align-cljlet.el --- Space align various Clojure forms 
+;;; align-cljlet.el --- Space align various Clojure forms
 
 ;; Copyrigth (C) 2011  Glen Stampoultzis
 
@@ -82,7 +82,7 @@
   "Check if we are currently looking at a let form"
   (save-excursion
     (if (looking-at "(")
-        (progn 
+        (progn
           (down-list)
           (let ((start (point))
                 name)
@@ -232,7 +232,7 @@ be positioned on the first s-exp in the subform."
                      (insert (make-string difference ? )))
                     ((< difference 0)
                      (delete-backward-char (abs difference)))))))
-      
+
       (setq widths (cdr widths)))
     )
   )
