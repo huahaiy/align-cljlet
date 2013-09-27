@@ -95,6 +95,9 @@
              (string-match " *binding" name)
              (string-match " *loop" name)
              (string-match " *with-open" name)
+             (string-match " *:require" name)
+             (string-match " *:use" name)
+             (string-match " *assoc" name)
              (string-match " *cond" name)
              (string-match " *condp" name)
              (string-match " *case" name)
@@ -179,6 +182,18 @@
                (acl-has-next-sexp)))
       (list width1 width2 width3))))
 
+(defun acl-calc-ns-width ()
+  "Calculate the widths required to align an ns form"
+  (save-excursion
+    (let ((width 0))
+      (while (progn
+               (down-list)
+               (if (> (acl-get-width) width)
+                   (setq width (acl-get-width)))
+               (up-list)
+               (acl-has-next-sexp)))
+      width)))
+
 (defun acl-check-for-another-sexp ()
   "Is there another sexp after this"
   (save-excursion
@@ -237,7 +252,7 @@ be positioned on the first s-exp in the subform."
     )
   )
 
-(defun acl-respace-defroute-form (widths)
+(defun acl-respace-multi-widths-form (widths)
   "Respace the entire defroute definition. Point must be
 positioned on the defroute form."
   (let ((begin (point)))
@@ -266,36 +281,47 @@ positioned on the defroute form."
   (progn
     (down-list 1)
     (forward-sexp 3)
-    (backward-sexp)                 ; this position's us back at the start of the
-                                        ; first form.
-    (acl-respace-defroute-form (acl-take-n defroute-columns (acl-calc-route-widths)))))
+    (backward-sexp) ;; this positions us back at the start of the first form.
+    (let ((widths (acl-take-n defroute-columns (acl-calc-route-widths))))
+      (acl-respace-multi-widths-form widths))))
+
+(defun acl-start-align-ns ()
+  (progn
+    (down-list)
+    (let ((width (acl-calc-ns-width)))
+      (acl-respace-multi-widths-form (list width)))))
+
+(defun acl-get-forward-steps [m]
+  (cond
+   ((string= m "cond") 2)
+   ((or (string= m "assoc") (string= m "case")) 3)
+   ((string= m "condp") 4)))
 
 (defun acl-position-to-start ()
-  (if (looking-at "( *\\(cond\\|case\\)\\b")
-      (progn
-        (down-list 1)
-        (forward-sexp 2)
-        (backward-sexp))
-    (if (looking-at "( *condp\\b")
+  (if (looking-at "( *\\(condp?\\|case\\|assoc\\)\\b")
+      (let ((forward-steps (acl-get-forward-steps
+                            (match-string-no-properties 1))))
         (progn
           (down-list 1)
-          (forward-sexp 4)
-          (backward-sexp))
-      (if (not (looking-at "{"))
-          ;; move to start of [
-          (down-list 2)
-        (down-list 1)))))
+          (forward-sexp forward-steps)
+          (backward-sexp)))
+    (if (not (looking-at "{"))
+        ;; move to start of [
+        (down-list 2)
+      (down-list 1))))
 
 (defun acl-align-form ()
   "Determine what type of form we are currently positioned at and align it"
   (if (looking-at "( *defroutes")
       (acl-start-align-defroute)
-    (progn
-      (acl-position-to-start)
-      (if (acl-lines-correctly-paired)
-          (let ((w (acl-calc-width)))
-            (acl-respace-form w)
-            )))))
+    (if (looking-at "( *:\\(require\\|use\\)")
+        (acl-start-align-ns)
+      (progn
+        (acl-position-to-start)
+        (if (acl-lines-correctly-paired)
+            (let ((w (acl-calc-width)))
+              (acl-respace-form w)
+              ))))))
 
 ;; Borrowed from align-let.el:
 (defun acl-backward-to-code ()
