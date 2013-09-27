@@ -97,6 +97,7 @@
              (string-match " *with-open" name)
              (string-match " *cond" name)
              (string-match " *condp" name)
+             (string-match " *case" name)
              (string-match " *defroutes" name)
              )))
       (if (looking-at "{")
@@ -270,7 +271,7 @@ positioned on the defroute form."
     (acl-respace-defroute-form (acl-take-n defroute-columns (acl-calc-route-widths)))))
 
 (defun acl-position-to-start ()
-  (if (looking-at "( *cond\\b")
+  (if (looking-at "( *\\(cond\\|case\\)\\b")
       (progn
         (down-list 1)
         (forward-sexp 2)
