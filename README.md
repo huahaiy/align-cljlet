@@ -24,6 +24,9 @@ Forms currently handled:
  * defroute
  * cond
  * condp (except :>> subforms)
+ * case
+ * assoc
+ * :require and :use in ns forms
 
 If there are let pairs together on the same line the code will refuse
 to align them. For example, the following will not align:
