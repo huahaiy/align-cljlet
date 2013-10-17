@@ -314,7 +314,7 @@ positioned on the defroute form."
   "Determine what type of form we are currently positioned at and align it"
   (if (looking-at "( *defroutes")
       (acl-start-align-defroute)
-    (if (looking-at "( *:\\(require\\|use\\)")
+    (if (looking-at "( *:\\(require\\|use\\)\\(-macros\\)?")
         (acl-start-align-ns)
       (progn
         (acl-position-to-start)
