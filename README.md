@@ -22,11 +22,13 @@ Forms currently handled:
  * with-open
  * literal hashes {}
  * defroute
+ * routes
  * cond
  * condp (except :>> subforms)
  * case
  * assoc
  * :require and :use in ns forms
+ * alt!
 
 If there are let pairs together on the same line the code will refuse
 to align them. For example, the following will not align:

@@ -46,6 +46,7 @@
 ;; 23-Jan-2011 - Bug fixes and code cleanup.
 ;; 02-Apr-2012 - Package up for Marmalade
 ;; 30-Aug-2012 - Support for aligning defroute.
+;; 26-Aug-2015 - Support for aligning routes and alt!.
 ;;
 ;;; Known limitations:
 ;;
@@ -73,7 +74,7 @@
 ;; Defaults to 1.
 ;;
 
-(defcustom defroute-columns 1
+(defcustom defroute-columns 2
   "The number of columns to align in a defroute call"
   :type 'integer
   :group 'align-cljlet)
@@ -102,6 +103,8 @@
              (string-match " *condp" name)
              (string-match " *case" name)
              (string-match " *defroutes" name)
+             (string-match " *routes" name)
+             (string-match " *alt" name)
              )))
       (if (looking-at "{")
           t))))
@@ -277,6 +280,14 @@ positioned on the defroute form."
   (butlast xs (- (length xs) n)))
 
 
+(defun acl-start-align-route ()
+  (progn
+    (down-list 1)
+    (forward-sexp 3)
+    (backward-sexp 2) ;; this positions us back at the start of the first form.
+    (let ((widths (acl-take-n defroute-columns (acl-calc-route-widths))))
+      (acl-respace-multi-widths-form widths))))
+
 (defun acl-start-align-defroute ()
   (progn
     (down-list 1)
@@ -305,23 +316,30 @@ positioned on the defroute form."
           (down-list 1)
           (forward-sexp forward-steps)
           (backward-sexp)))
-    (if (not (looking-at "{"))
+    (if (looking-at "( *alt!") 
+        (progn
+          (down-list 1)
+          (forward-sexp 2)
+          (backward-sexp))
+      (if (not (looking-at "{"))
         ;; move to start of [
         (down-list 2)
-      (down-list 1))))
+      (down-list 1)))))
 
 (defun acl-align-form ()
   "Determine what type of form we are currently positioned at and align it"
-  (if (looking-at "( *defroutes")
+  (if (looking-at "( *defroutes") 
       (acl-start-align-defroute)
-    (if (looking-at "( *:\\(require\\|use\\)\\(-macros\\)?")
+    (if (looking-at "( *routes") 
+        (acl-start-align-route) 
+      (if (looking-at "( *:\\(require\\|use\\)\\(-macros\\)?")
         (acl-start-align-ns)
-      (progn
-        (acl-position-to-start)
-        (if (acl-lines-correctly-paired)
+        (progn
+          (acl-position-to-start)
+          (if (acl-lines-correctly-paired)
             (let ((w (acl-calc-width)))
               (acl-respace-form w)
-              ))))))
+              )))))))
 
 ;; Borrowed from align-let.el:
 (defun acl-backward-to-code ()
@@ -356,3 +374,4 @@ from `beginning-of-defun'.  If it finds nothing then just go to
 (provide 'align-cljlet)
 
 ;;; align-cljlet.el ends here
+
